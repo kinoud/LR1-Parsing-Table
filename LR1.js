@@ -319,8 +319,13 @@ function reformState(s){
 		
 		let buff1=getWordDecode(it.p.lhs);
 		buff1+=spliter00;
-		for(let x of it.p.rhs)
-			buff1+=' '+getWordDecode(x);
+		for(let i in it.p.rhs){
+			if(parseInt(i)==it.idx)
+				buff1+=' .';
+			buff1+=' '+getWordDecode(it.p.rhs[i]);
+		}
+		if(it.idx==it.p.rhs.length)
+			buff1+=' .';
 
 		let buff2='';
 		for(let x of it.tail){
@@ -334,6 +339,27 @@ function reformState(s){
 	}
 	return s;
 }
+
+function decodeProduction(p){
+	let L=getWordDecode(p.lhs);
+	let R='';
+	for(let x of p.rhs)
+		R+=' '+getWordDecode(x);
+	return L+'-->'+R;
+}
+
+function writeGotoTable(u,e,type,v){
+	e=getWordDecode(e);
+	if(type=='shift')v='shift '+v;
+	else if(type=='reduce')v='reduce '+decodeProduction(v);
+	else v=type;
+
+	if(gotoTable[u][e]){
+		gotoTable[u][e]+=' //// '+v;
+		console.log('Conflict: I'+u+' reads "'+e+'" then "'+gotoTable[u][e]+'"');
+	}else gotoTable[u][e]=v;
+}
+
 
 function main() {
 	setupGrammer();
@@ -370,22 +396,7 @@ function main() {
 		gotoTable.push({});
 	}
 
-
-	function writeGotoTable(u,e,v){
-		e=getWordDecode(e);
-		if(gotoTable[u][e]){
-			gotoTable[u][e]+=' //// '+v;
-			console.log('Conflict: I'+u+' reads "'+e+'" then "'+gotoTable[u][e]+'"');
-		}else gotoTable[u][e]=v;
-	}
-
-	function getReduceNote(p){
-		let L=getWordDecode(p.lhs);
-		let R='';
-		for(let x of p.rhs)
-			R+=' '+getWordDecode(x);
-		return 'reduce '+L+'-->'+R;
-	}
+	
 
 	for (let I of C) {
 		//I is of string type
@@ -396,7 +407,7 @@ function main() {
 			if (J != '') {
 				//shift
 				let v = stateID.get(J);
-				writeGotoTable(u,X,'shift '+v);
+				writeGotoTable(u,X,'shift',v);
 			}
 			if (isTerminal(X)) {
 				//maybe reduce
@@ -404,7 +415,7 @@ function main() {
 					let it = new Item();
 					it.fromStr(s);
 					if (it.tail == X && it.getNext() == '$') {
-						writeGotoTable(u,X,getReduceNote(it.p));
+						writeGotoTable(u,X,'reduce',it.p);
 						//we assume there's no conflict (that is not always true)
 						break;
 					}
@@ -415,7 +426,7 @@ function main() {
 			let it = new Item();
 			it.fromStr(s);
 			if (it.tail == '$' && it.getNext() == '$') {
-				writeGotoTable(u,'$',getReduceNote(it.p));
+				writeGotoTable(u,'$','reduce',it.p);
 				if (it.p.lhs == getWordEncode(S_))
 					writeGotoTable(u,'$','accept');
 				break;
@@ -432,7 +443,7 @@ function main() {
 		buff += '<div id=\''+'I'+id+'\'>';
 		buff += 'I' + id + '</br>' + state.replace(/\n/g, '</br>');
 		buff+='</br><div class="trans">';
-		buff+=genTip(gotoTable[id]);
+		buff+=genTrans(gotoTable[id]);
 		buff += '</div></div>';
 	}
 	buff += '';
@@ -441,7 +452,7 @@ function main() {
 	let tip=document.getElementById('tip');
 
 
-	function genTip(list){
+	function genTrans(list){
 		let ans='';
 		for(let s in list){
 			let e=list[s].replace('////','<note>/</note>');
@@ -461,7 +472,7 @@ function main() {
 		let id=parseInt(div.id.replace('I',''));
 		if(div.id.indexOf('I')==-1)tip.style.display='none';
 		else tip.style.display='';
-		tip.innerHTML=div.id+'</br>'+genTip(gotoTable[id]);
+		tip.innerHTML=div.id+'</br>'+genTrans(gotoTable[id]);
 	})
 
 	console.log('gotoTable:');
