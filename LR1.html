@@ -1,50 +1,84 @@
 <html>
-	<head>
-		<title>LR(1) Parsing Table</title>
-		<script type="text/javascript" src="LR1.js"></script>
-	</head>
-	<body>
-		<style>
-			
-			#state div{
-				font-size: large;
-				color:grey;
-				background-color: whitesmoke;
-				float:left;
-				margin:0.25em;
-				padding:0.25em;
-			}
 
-			#state .trans{
-				font-size: large;
-				opacity: 0.8;
-				color:white;
-				border-radius: 5px;
-				background-color:rgb(179, 178, 178);
-			}
-			
-			tip {
-				font-size: large;
-				opacity: 0.8;
-				color:white;
-				padding:0.25em;
-				background-color:cornflowerblue;
-				position: absolute;
-			}
-			note{
-				font-weight: bold;
-				color:black;
-			}
-			stress{
-				font-weight: bold;
-				color: black;
-			}
-			keyword{
-				font-style: italic;
-			}
-		</style>
-		<div id='state'></div>
+<head>
+	<title>LR(1) Parsing Table</title>
+	<script type="text/javascript" src="LR1.js"></script>
+</head>
 
-		<tip id='tip'></tip>
-	</body>
+<body>
+	<style>
+		#state div {
+			font-size: large;
+			color: grey;
+			background-color: whitesmoke;
+			float: left;
+			margin: 0.25em;
+			padding: 0.25em;
+		}
+
+		#state .trans {
+			font-size: large;
+			opacity: 0.8;
+			color: white;
+			border-radius: 5px;
+			background-color: rgb(179, 178, 178);
+		}
+
+		#state s {
+			color: rgb(253, 223, 203);
+		}
+
+		tip {
+			font-size: large;
+			opacity: 0.8;
+			color: white;
+			padding: 0.25em;
+			background-color: cornflowerblue;
+			position: absolute;
+		}
+
+		note {
+			font-weight: bold;
+			color: black;
+		}
+
+		stress {
+			font-weight: bold;
+			color: black;
+		}
+
+		keyword {
+			font-style: italic;
+		}
+
+		#in {
+			width: 100%;
+			height: 10em;
+			font-size: large;
+			font-family:Arial, Helvetica, sans-serif;
+		}
+
+		#result {
+			padding: 0.5em;
+			background-color: whitesmoke;
+			color: #50919b;
+			font-size: large;
+		}
+
+		#btn{
+			margin: 10px;
+			color: #5574b0;
+			font-size: xx-large;
+		}
+	</style>
+
+
+	<textarea id="in"></textarea>
+	<div>(You should assure that tokens are seperated with ' ' or '\n'.)</div>
+	<input type='button' id='btn' value='Parse'>
+	<div id='result'></div>
+
+	<div id='state'></div>
+</body>
+
 </html>
