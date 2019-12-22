@@ -1,0 +1,50 @@
+<html>
+	<head>
+		<title>LR(1) Parsing Table</title>
+		<script type="text/javascript" src="LR1.js"></script>
+	</head>
+	<body>
+		<style>
+			
+			#state div{
+				font-size: large;
+				color:grey;
+				background-color: whitesmoke;
+				float:left;
+				margin:0.25em;
+				padding:0.25em;
+			}
+
+			#state .trans{
+				font-size: large;
+				opacity: 0.8;
+				color:white;
+				border-radius: 5px;
+				background-color:rgb(179, 178, 178);
+			}
+			
+			tip {
+				font-size: large;
+				opacity: 0.8;
+				color:white;
+				padding:0.25em;
+				background-color:cornflowerblue;
+				position: absolute;
+			}
+			note{
+				font-weight: bold;
+				color:black;
+			}
+			stress{
+				font-weight: bold;
+				color: black;
+			}
+			keyword{
+				font-style: italic;
+			}
+		</style>
+		<div id='state'></div>
+
+		<tip id='tip'></tip>
+	</body>
+</html>
