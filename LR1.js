@@ -40,6 +40,12 @@ function Production(id, lhs, rhs) {
 	for (let name in prototype) this[name] = prototype[name];
 }
 
+/**
+ * 
+ * @param {Production} p 
+ * @param {number} idx 
+ * @param {string} tail 
+ */
 function Item(p, idx, tail) {
 	let prototype = {
 		p: p,
@@ -114,17 +120,15 @@ function getWordDecode(x) {
 }
 
 
-
-
-
-
+let mark2Id = {};
 /**
- * @param {any} id Unique ID.
  * @param {string} lhs A word.
  * @param {string} rhs Words sperated with ' '(white space).
+ * @param {any} mark Used when configuring setting up a grammer.
  */
-function addProduction(id, lhs, rhs) {
-	if (productions[id]) alert('error133 id=' + id + ' already exists.');
+function addProduction(lhs, rhs, mark) {
+	let id = productions.length;
+	mark2Id[mark] = id;
 	let list = rhs.split(' ');
 	list = list.filter(e => { return e != ''; });
 	rhs = '';
@@ -151,7 +155,7 @@ function CLOSURE(I) {
 				continue;
 			let beta = it.getSuffix(it.idx + 1);
 			for (let i in productions) {
-				let p=productions[i];
+				let p = productions[i];
 				if (p.lhs != B)
 					continue;
 				for (let b of getFirstSet(beta + it.tail))
@@ -227,7 +231,7 @@ function FIRST() {
 	while (1) {
 		let change = false;
 		for (let i in productions) {
-			let p=productions[i];
+			let p = productions[i];
 			//debugger;
 			let L = p.lhs;
 			if (isTerminal(L))
@@ -280,7 +284,7 @@ function setSymbol(Ts, Ns, S) {
 		setNonTerminal(N);
 	S_ = S + "'";
 	setNonTerminal(S_);
-	addProduction(0, S_, S);
+	addProduction(S_, S);
 	let item0 = new Item(productions[0], 0, '$');
 	I0.add(item0.string());
 	grammerBeingSet = false;
@@ -347,10 +351,10 @@ function reformState(s) {
 /**
  * @param {string} s A sentence each character of which is an encoded symbol.
  */
-function translate(s){
-	let ans='';
-	for(let x of s)
-		ans+=' '+getWordDecode(x);
+function translate(s) {
+	let ans = '';
+	for (let x of s)
+		ans += ' ' + getWordDecode(x);
 	return ans;
 }
 
@@ -360,27 +364,27 @@ function translate(s){
  */
 function decodeProduction(p) {
 	let L = getWordDecode(p.lhs);
-	let R=translate(p.rhs);
+	let R = translate(p.rhs);
 	return L + '-->' + R;
 }
 
 function writeGotoTable(u, e, type, v) {
 	let de = getWordDecode(e);
-	let act,dscp;
-	if (type == 'shift'){
+	let act, dscp;
+	if (type == 'shift') {
 		dscp = 'shift ' + v;
-		act='s'+v;
-	}else if (type == 'reduce'){
+		act = 's' + v;
+	} else if (type == 'reduce') {
 		dscp = 'reduce ' + decodeProduction(v);
-		act='r'+v.id;
-	}else{
+		act = 'r' + v.id;
+	} else {
 		dscp = type;
-		act='acc';
+		act = 'acc';
 	}
 	if (gotoTable[u][de]) {
 		if (type == 'accept') {
 			gotoTable[u][de] = dscp;
-			parsingTable[u][de]=act;
+			parsingTable[u][de] = act;
 			return;
 		}
 
@@ -393,7 +397,7 @@ function writeGotoTable(u, e, type, v) {
 
 		if (isReduceGranted(e, v.id)) {
 			gotoTable[u][de] = dscp;
-			parsingTable[u][de]=act;
+			parsingTable[u][de] = act;
 			console.log('Reduce granted.');
 		} else {
 			loser = dscp;
@@ -402,9 +406,9 @@ function writeGotoTable(u, e, type, v) {
 
 		gotoTable[u][de] += ' <s>' + loser + '</s>';
 
-	} else{
+	} else {
 		gotoTable[u][de] = dscp;
-		parsingTable[u][de]=act;
+		parsingTable[u][de] = act;
 	}
 }
 
@@ -531,9 +535,7 @@ function main() {
 		tip.innerHTML = div.id + '</br>' + genTrans(gotoTable[id]);
 	})
 
-	document.getElementById('in').value=
-	'classtype id = id * id ; \n if ( id relop number ) { \n   id = id ( id , id ) ; \n } else { \n   while ( id ) { \n    id ( ) ; \n   } \n }';
-	document.getElementById('btn').addEventListener('click',e=>{
+	document.getElementById('btn').addEventListener('click', e => {
 		parseLR1(document.getElementById('in').value);
 	});
 
@@ -546,28 +548,28 @@ function main() {
 
 /**
  * @param {string} x Symbol which is encoded. 
- * @param {number} p Production ID.
+ * @param {number} id Production ID.
  */
-function isReduceGranted(x, p) {
-	if (!_grantReduce[x]) return false;
-	if (!_grantReduce[x][p]) return false;
+function isReduceGranted(x, id) {
+	if (!grantReduceBuff[x]) return false;
+	if (!grantReduceBuff[x][id]) return false;
 	return true;
 }
-let _grantReduce = [];
+let grantReduceBuff = [];
 /**
  * When conflict between 'reads x then shift' and 'reads x then reduce p' happens,
  * should we grant priority to reduce action?
  * This function sets such hits. By default we choose 'shift' action.
  * @param {[string]} slist Symbols.
- * @param {[number]} plist Production IDs.
+ * @param {[number]} mlist Marks of productions.
  */
-function grantPrioReduce(slist, plist) {
+function grantReduce(slist, mlist) {
 	for (let s of slist) {
 		s = getWordEncode(s);
-		if (!_grantReduce[s])
-			_grantReduce[s] = [];
-		for (let i of plist)
-			_grantReduce[s][i] = true;
+		if (!grantReduceBuff[s])
+			grantReduceBuff[s] = [];
+		for (let m of mlist)
+			grantReduceBuff[s][mark2Id[m]] = true;
 	}
 }
 
@@ -577,67 +579,67 @@ function grantPrioReduce(slist, plist) {
  */
 function parseLR1(text) {
 	//preprocess
-	text+=' $';
-	text=text.replace(/[\n\t]/g,' ');
+	text += ' $';
+	text = text.replace(/[\n\t]/g, ' ');
 	let toks = text.split(' ');
 	toks = toks.filter(e => { return e != ''; });
 	for (let i in toks)
 		toks[i] = getWordEncode(toks[i]);
 	//preprocess ends
-	let cur=0;
-	let state=0;
-	let stack=[0],top=0;
-	let rec=[];
+	let cur = 0;
+	let state = 0;
+	let stack = [0], top = 0;
+	let rec = [];
 
-	function shift(word){
-		let act=parsingTable[state][word];
-		if(act[0]!='s')alert('error585');
-		let nxt=parseInt(act.substr(1));
-		stack[++top]=nxt;
-		state=nxt;
+	function shift(word) {
+		let act = parsingTable[state][word];
+		if (act[0] != 's') alert('error585');
+		let nxt = parseInt(act.substr(1));
+		stack[++top] = nxt;
+		state = nxt;
 	}
-	while(1){
-		let word=getWordDecode(toks[cur]);
-		let act=parsingTable[state][word];
-		if(act[0]=='s'){
+	while (1) {
+		let word = getWordDecode(toks[cur]);
+		let act = parsingTable[state][word];
+		if (act[0] == 's') {
 			shift(word);
 			cur++;
-			if(productions[-1])alert('error558');
+			if (productions[-1]) alert('error558');
 			rec.push(-1);
-		}else if(act[0]=='r'){
-			let p=parseInt(act.substr(1));
-			top-=productions[p].rhs.length;
-			state=stack[top];
+		} else if (act[0] == 'r') {
+			let p = parseInt(act.substr(1));
+			top -= productions[p].rhs.length;
+			state = stack[top];
 			rec.push(p);
 			shift(getWordDecode(productions[p].lhs));
-		}else if(act[0]=='a'){
+		} else if (act[0] == 'a') {
 			break;
-		}else{
+		} else {
 			alert('error567 Parsing failed!');
 			return;
 		}
 	}
-	let idx=rec.length-1;
-	let symbols=productions[rec[idx]].lhs,input='';
-	let buff='';
-	for(;idx>=0;idx--){
-		if(rec[idx]>=0){
-			let len=symbols.length;
-			let p=productions[rec[idx]];
-			let last=symbols[len-1];
-			symbols=symbols.substr(0,len-1);
+	let idx = rec.length - 1;
+	let symbols = productions[rec[idx]].lhs, input = '';
+	let buff = '';
+	for (; idx >= 0; idx--) {
+		if (rec[idx] >= 0) {
+			let len = symbols.length;
+			let p = productions[rec[idx]];
+			let last = symbols[len - 1];
+			symbols = symbols.substr(0, len - 1);
 			//console.log(translate(symbols)+'<note>'+translate(last)+'</note>'+translate(input));
-			buff+=translate(symbols)+'<b>'+translate(last)+'</b>'+translate(input);
-			buff+='</br></br>'
-			symbols+=p.rhs;
-		}else{
-			input=toks[--cur]+input;
-			symbols=symbols.substr(0,symbols.length-1);
+			buff += translate(symbols) + '<b>' + translate(last) + '</b>' + translate(input);
+			buff += '</br></br>'
+			symbols += p.rhs;
+		} else {
+			input = toks[--cur] + input;
+			symbols = symbols.substr(0, symbols.length - 1);
 		}
 	}
 	//console.log(translate(symbols)+translate(input));
-	buff+=translate(symbols)+translate(input);
-	document.getElementById('result').innerHTML=buff;
+	buff += translate(symbols) + translate(input);
+	document.getElementById('result').innerHTML = buff;
 }
 
 
@@ -648,43 +650,42 @@ function parseLR1(text) {
 function setupGrammer() {
 	setSymbol(
 		'id number + - * / , ; classtype = relop if else for while { } ( ) [ ]',
-		'obj fcall paramlist expr decl assignmt simplestmt stmtblock ctrlstmt cond ifstmt forstmt whilestmt',
+		'fcall paramlist expr decl assignmt simplestmt stmtblock ctrlstmt ifstmt forstmt whilestmt',
 		'stmtblock'
 	);
-	addProduction(1, 'obj', 'id');
-	addProduction(2, 'obj', 'number');
-	addProduction(3, 'obj', 'fcall');
-	addProduction(4, 'fcall', 'id ( )');
-	addProduction(5, 'fcall', 'id ( paramlist )');
-	addProduction(6, 'paramlist', 'paramlist , obj');
-	addProduction(7, 'paramlist', 'obj');
-	addProduction(8, 'expr', 'expr + expr');
-	addProduction(9, 'expr', 'expr - expr');
-	addProduction(10, 'expr', 'expr * expr');
-	addProduction(11, 'expr', 'expr / expr');
-	addProduction(12, 'expr', '( expr )');
-	addProduction(13, 'expr', 'obj');
-	addProduction(14, 'decl', 'classtype id');
-	addProduction(15, 'decl', 'classtype id = expr');
-	addProduction(16, 'decl', 'classtype id [ number ]');
-	addProduction(17, 'assignmt', 'id = expr');
-	addProduction(18, 'simplestmt', 'decl');
-	addProduction(30, 'simplestmt', 'assignmt');
-	addProduction(31, 'simplestmt', 'expr');
-	addProduction(19, 'stmtblock', 'stmtblock simplestmt ;');
-	addProduction(20, 'stmtblock', 'simplestmt ;');
-	addProduction(33, 'stmtblock', 'stmtblock ctrlstmt');
-	addProduction(32, 'stmtblock', 'ctrlstmt')
-	addProduction(21, 'ctrlstmt', 'ifstmt');
-	addProduction(22, 'ctrlstmt', 'forstmt');
-	addProduction(23, 'ctrlstmt', 'whilestmt');
-	addProduction(24, 'cond', 'expr');
-	addProduction(25, 'cond', 'expr relop expr');
-	addProduction(26, 'ifstmt', 'if ( cond ) { stmtblock }');
-	addProduction(27, 'ifstmt', 'if ( cond ) { stmtblock } else { stmtblock }');
-	addProduction(28, 'forstmt', 'for ( simplestmt ; simplestmt ; simplestmt ) { stmtblock }')
-	addProduction(29, 'whilestmt', 'while ( cond ) { stmtblock }');
-	
-	grantPrioReduce(['*', '/'], [10, 11]);
-	grantPrioReduce(['+', '-'], [8, 9, 10, 11]);
+	addProduction('expr', 'id');
+	addProduction('expr', 'number');
+	addProduction('expr', 'fcall');
+	addProduction('fcall', 'id ( )');
+	addProduction('fcall', 'id ( paramlist )');
+	addProduction('paramlist', 'paramlist , expr');
+	addProduction('paramlist', 'expr');
+	addProduction('expr', 'expr relop expr', 1);
+	addProduction('expr', 'expr + expr', 2);
+	addProduction('expr', 'expr - expr', 3);
+	addProduction('expr', 'expr * expr', 4);
+	addProduction('expr', 'expr / expr', 5);
+	addProduction('expr', '( expr )');
+	addProduction('decl', 'classtype id');
+	addProduction('decl', 'classtype id = expr');
+	addProduction('decl', 'classtype id [ number ]');
+	addProduction('assignmt', 'id = expr');
+	addProduction('simplestmt', 'decl');
+	addProduction('simplestmt', 'assignmt');
+	addProduction('simplestmt', 'expr');
+	addProduction('stmtblock', 'stmtblock simplestmt ;');
+	addProduction('stmtblock', 'simplestmt ;');
+	addProduction('stmtblock', 'stmtblock ctrlstmt');
+	addProduction('stmtblock', 'ctrlstmt')
+	addProduction('ctrlstmt', 'ifstmt');
+	addProduction('ctrlstmt', 'forstmt');
+	addProduction('ctrlstmt', 'whilestmt');
+	addProduction('ifstmt', 'if ( expr ) { stmtblock }');
+	addProduction('ifstmt', 'if ( expr ) { stmtblock } else { stmtblock }');
+	addProduction('forstmt', 'for ( simplestmt ; expr ; simplestmt ) { stmtblock }')
+	addProduction('whilestmt', 'while ( expr ) { stmtblock }');
+
+	grantReduce(['*', '/'], [4, 5]);
+	grantReduce(['+', '-'], [2, 3, 4, 5]);
+	grantReduce(['relop'], [1, 2, 3, 4, 5]);
 }
