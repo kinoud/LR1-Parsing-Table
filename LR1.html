@@ -43,42 +43,43 @@
 		}
 
 		#in {
+			font-size:large;
+			color: rgb(45, 46, 49);
 			width: 100%;
-			height: 10em;
-			font-size: large;
-			font-family:Arial, Helvetica, sans-serif;
+			height: 14em;
+			padding: 0.5em;
 		}
 
 		#result {
 			padding: 0.5em;
-			background-color: whitesmoke;
 			color: #50919b;
-			font-size: large;
 		}
 
 		#btn{
-			margin: 10px;
-			color: #5574b0;
-			font-size: xx-large;
+			font-size: large;
+			-webkit-transition-duration: 0.4s; /* Safari */
+    		transition-duration: 0.4s;
+			color: 50919b;
+			border: none;
+		}
+
+		#btn:hover{
+			background-color: #50919b; /* Green */
+			color: white;
 		}
 	</style>
 
 
 	<textarea id="in">
-classtype id = id + id ( ) * ( number - id / number ) ; 
-if ( id relop number ) { 
-	id = id ( id , id ) ; 
+classtype id = id ( id ( number ) , id ) * id / number + id * id ; 
+if ( id ) { 
+	id = number ;
+	while ( id relop id ) { id = id + number ; } 
 } else { 
-	while ( id ) { 
-		id ( ) ; 
-	} 
-	for ( id = number ; id relop id ; id = id + number ) {
-		id ( id * id , number , id ( ) ) ;
-	}
+	for ( id = number ; id relop id ; id = id + number ) { }
 }
-	</textarea>
-	<div>(You should assure that tokens are seperated with ' ' or '\n'.)</div>
-	<input type='button' id='btn' value='Parse'>
+</textarea></br>
+	<input type='button' id='btn' value='Click to parse. (You should assure that tokens are seperated with " " or "\n".)'>
 	<div id='result'></div>
 
 	<div id='state'></div>

@@ -24,13 +24,20 @@ let parsingTable = new Array();
 //private
 let spliter00 = '-->';
 let spliter01 = ' @ ';
-let reserveCharacters = '.$#'
+let reserveCharacters = '$@'
 
+/**
+ * This should be a const object.
+ * @param {number} id 
+ * @param {string} lhs 
+ * @param {string} rhs 
+ */
 function Production(id, lhs, rhs) {
 	let prototype = {
 		id: id,
 		lhs: lhs,
 		rhs: rhs,
+		rlen: rhs=='@'?0:rhs.length,
 		getSuffix(i) {
 			if (i.toString() === i)
 				alert('error2 "i" is expected to be an integer but a string!');
@@ -61,8 +68,7 @@ function Item(p, idx, tail) {
 		},
 		getNext() {
 			//debugger;
-			let ans = this.idx == this.p.rhs.length ? '$' : this.p.rhs[this.idx];
-			return ans == '#' ? '$' : ans;
+			return this.idx == this.p.rlen ? '$' : this.p.rhs[this.idx];
 		},
 		getSuffix(i) {
 			return this.p.getSuffix(i);
@@ -99,6 +105,7 @@ let encodeMap = {}, decodeMap = {};
  * @return {string} A single character corresponding to this word.
  */
 function getWordEncode(word) {
+	if(word=='')return '@';
 	if (!encodeMap[word]) {
 		if (!grammerBeingSet)
 			alert('error5 Cannot recognize "' + word + '"');
@@ -115,6 +122,7 @@ function getWordEncode(word) {
  * @return {string} A word to which x corresponds.
  */
 function getWordDecode(x) {
+	if(x=='@')return '';
 	if (reserveCharacters.indexOf(x) != -1) return x;
 	return decodeMap[x];
 }
@@ -134,6 +142,7 @@ function addProduction(lhs, rhs, mark) {
 	rhs = '';
 	for (let w of list)
 		rhs += getWordEncode(w);
+	if(rhs=='')rhs=getWordEncode(rhs);
 	lhs = getWordEncode(lhs);
 	productions[id] = new Production(id, lhs, rhs);
 }
@@ -159,7 +168,7 @@ function CLOSURE(I) {
 				if (p.lhs != B)
 					continue;
 				for (let b of getFirstSet(beta + it.tail))
-					if (b != '#')
+					if (b != '@')
 						I.add((new Item(p, 0, b)).string());
 			}
 			//debugger;
@@ -192,7 +201,7 @@ function GOTO(I, X) {
 }
 
 /**
- * Note that '#$' is also considered as terminal.
+ * Note that '@$' is also considered as terminal.
  * @param {string} x Symbol.
  */
 function isTerminal(x) {
@@ -209,15 +218,15 @@ function getFirstSet(s) {
 		if (!isTerminal(x)) {
 			for (let o of fi[x])
 				ans.add(o);
-			if (!fi[x].has('#'))
+			if (!fi[x].has('@'))
 				break;
-		} else if (x != '#') {
+		} else if (x != '@') {
 			ans.add(x);
 			break;
 		}
 	}
 	if (ans.size == 0)
-		ans.add('#');
+		ans.add('@');
 	return ans;
 }
 
@@ -245,18 +254,18 @@ function FIRST() {
 						change = true;
 					break;
 				}
-				let epsL = fi[L].has('#');
+				let epsL = fi[L].has('@');
 
 				fi[L] = new Set([...fi[L], ...fi[R]]);//union
 
 				if (i < p.rhs.size - 1 && !epsL)
-					fi[L].delete('#');//# stands for eps
+					fi[L].delete('@');//@ stands for eps
 
 				//debugger;
 				if (len != fi[L].size)
 					change = true;
 
-				let epsR = fi[R].has('#');
+				let epsR = fi[R].has('@');
 				if (!epsR) break;
 
 			}
@@ -327,12 +336,12 @@ function reformState(s) {
 
 		let buff1 = getWordDecode(it.p.lhs);
 		buff1 += spliter00;
-		for (let i in it.p.rhs) {
-			if (parseInt(i) == it.idx)
+		for (let i=0;i<it.p.rlen;i++) {
+			if (i == it.idx)
 				buff1 += ' .';
 			buff1 += ' ' + getWordDecode(it.p.rhs[i]);
 		}
-		if (it.idx == it.p.rhs.length)
+		if (it.idx == it.p.rlen)
 			buff1 += ' .';
 
 		let buff2 = '';
@@ -410,6 +419,34 @@ function writeGotoTable(u, e, type, v) {
 		gotoTable[u][de] = dscp;
 		parsingTable[u][de] = act;
 	}
+}
+
+function drawStates(){
+
+	function genTrans(list) {
+		let ans = '';
+		for (let s in list) {
+			let e = list[s].replace('////', '<note>/</note>');
+			e = e.replace(/(accept|reduce|shift)/g, '<keyword>$1</keyword>');
+			ans += '<stress>' + s + '</stress>' + '<note> --- </note>' + e + '</br>';
+		}
+		return ans;
+	}
+	//draw states
+	let dom_state = document.getElementById("state");
+	let buff = '';
+	for (let state_id of stateID.entries()) {
+		let id = state_id[1];
+		let state = reformState(state_id[0]);
+		buff += '<div id=\'' + 'I' + id + '\'>';
+		buff += 'I' + id + '</br>' + state.replace(/\n/g, '</br>');
+		buff += '</br><div class="trans">';
+		buff += '<stress>Transition for this state:</stress></br>';
+		buff += genTrans(gotoTable[id]);
+		buff += '</div></div>';
+	}
+	buff += '';
+	dom_state.innerHTML = buff;
 }
 
 
@@ -494,46 +531,7 @@ function main() {
 		}
 	}
 
-	//draw states
-	let dom_state = document.getElementById("state");
-	let buff = '';
-	for (let state_id of stateID.entries()) {
-		let id = state_id[1];
-		let state = reformState(state_id[0]);
-		buff += '<div id=\'' + 'I' + id + '\'>';
-		buff += 'I' + id + '</br>' + state.replace(/\n/g, '</br>');
-		buff += '</br><div class="trans">';
-		buff += genTrans(gotoTable[id]);
-		buff += '</div></div>';
-	}
-	buff += '';
-	dom_state.innerHTML = buff;
-
-	let tip = document.getElementById('tip');
-
-
-	function genTrans(list) {
-		let ans = '';
-		for (let s in list) {
-			let e = list[s].replace('////', '<note>/</note>');
-			e = e.replace(/(accept|reduce|shift)/g, '<keyword>$1</keyword>');
-			ans += '<stress>' + s + '</stress>' + '<note> --- </note>' + e + '</br>';
-		}
-		return ans;
-	}
-	window.addEventListener('mousemove', e => {
-		return;
-		let div = e.target;
-		let x = e.clientX + document.body.scrollLeft - document.body.clientLeft;
-		let y = e.clientY + document.body.scrollTop - document.body.clientTop;
-
-		tip.style.left = x + 5 + 'px';
-		tip.style.top = y + 50 + 'px';
-		let id = parseInt(div.id.replace('I', ''));
-		if (div.id.indexOf('I') == -1) tip.style.display = 'none';
-		else tip.style.display = '';
-		tip.innerHTML = div.id + '</br>' + genTrans(gotoTable[id]);
-	})
+	drawStates();
 
 	document.getElementById('btn').addEventListener('click', e => {
 		parseLR1(document.getElementById('in').value);
@@ -608,7 +606,7 @@ function parseLR1(text) {
 			rec.push(-1);
 		} else if (act[0] == 'r') {
 			let p = parseInt(act.substr(1));
-			top -= productions[p].rhs.length;
+			top -= productions[p].rlen;
 			state = stack[top];
 			rec.push(p);
 			shift(getWordDecode(productions[p].lhs));
@@ -623,6 +621,7 @@ function parseLR1(text) {
 	let symbols = productions[rec[idx]].lhs, input = '';
 	let buff = '';
 	for (; idx >= 0; idx--) {
+		//debugger;
 		if (rec[idx] >= 0) {
 			let len = symbols.length;
 			let p = productions[rec[idx]];
@@ -630,12 +629,17 @@ function parseLR1(text) {
 			symbols = symbols.substr(0, len - 1);
 			//console.log(translate(symbols)+'<note>'+translate(last)+'</note>'+translate(input));
 			buff += translate(symbols) + '<b>' + translate(last) + '</b>' + translate(input);
-			buff += '</br></br>'
-			symbols += p.rhs;
+			buff += '</br>-->'
+			
+			/**
+			 * When p.rlen=0 p.rhs holds '@', we will not append '@' to symbols.
+			 */
+			if(p.rlen>0)symbols += p.rhs;
 		} else {
 			input = toks[--cur] + input;
 			symbols = symbols.substr(0, symbols.length - 1);
 		}
+		
 	}
 	//console.log(translate(symbols)+translate(input));
 	buff += translate(symbols) + translate(input);
@@ -648,6 +652,14 @@ function parseLR1(text) {
  * <Terminals,Non-terminals,Start-symbol,Productions>.
  */
 function setupGrammer() {
+	
+	/*
+	setSymbol('a','S A','S');
+	addProduction('S','S A');
+	addProduction('S','');
+	addProduction('A','a');
+	return;
+	*/
 	setSymbol(
 		'id number + - * / , ; classtype = relop if else for while { } ( ) [ ]',
 		'fcall paramlist expr decl assignmt simplestmt stmtblock ctrlstmt ifstmt forstmt whilestmt',
@@ -673,6 +685,7 @@ function setupGrammer() {
 	addProduction('simplestmt', 'decl');
 	addProduction('simplestmt', 'assignmt');
 	addProduction('simplestmt', 'expr');
+	addProduction('stmtblock','');
 	addProduction('stmtblock', 'stmtblock simplestmt ;');
 	addProduction('stmtblock', 'simplestmt ;');
 	addProduction('stmtblock', 'stmtblock ctrlstmt');
@@ -681,7 +694,7 @@ function setupGrammer() {
 	addProduction('ctrlstmt', 'forstmt');
 	addProduction('ctrlstmt', 'whilestmt');
 	addProduction('ifstmt', 'if ( expr ) { stmtblock }');
-	addProduction('ifstmt', 'if ( expr ) { stmtblock } else { stmtblock }');
+	addProduction('ifstmt', 'ifstmt else { stmtblock }');
 	addProduction('forstmt', 'for ( simplestmt ; expr ; simplestmt ) { stmtblock }')
 	addProduction('whilestmt', 'while ( expr ) { stmtblock }');
 
