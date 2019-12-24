@@ -50,12 +50,12 @@
 			padding: 0.5em;
 		}
 
-		#result {
+		.msg {
 			padding: 0.5em;
 			color: #50919b;
 		}
 
-		#btn{
+		button{
 			font-size: large;
 			-webkit-transition-duration: 0.4s; /* Safari */
     		transition-duration: 0.4s;
@@ -63,13 +63,13 @@
 			border: none;
 		}
 
-		#btn:hover{
+		button:hover{
 			background-color: #50919b; /* Green */
 			color: white;
 		}
 	</style>
 
-
+	<div id='info' class='msg'></div>
 	<textarea id="in">
 classtype id = id ( id ( number ) , id ) * id / number + id * id ; 
 if ( id ) { 
@@ -79,10 +79,14 @@ if ( id ) {
 	for ( id = number ; id relop id ; id = id + number ) { }
 }
 </textarea></br>
-	<input type='button' id='btn' value='Click to parse. (You should assure that tokens are seperated with " " or "\n".)'>
-	<div id='result'></div>
-
-	<div id='state'></div>
+	<button id='btn'>
+		Parse. (Tokens are seperated with " " or "\n".)
+	</button>
+	<div id='result' class='msg'></div>
+	<button onclick="document.getElementById('state').hidden^=1;">
+		Show/Hide all states and transitions.
+	</button>
+	<div id='state' hidden></div>
 </body>
 
 </html>

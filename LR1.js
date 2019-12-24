@@ -145,6 +145,7 @@ function addProduction(lhs, rhs, mark) {
 	if(rhs=='')rhs=getWordEncode(rhs);
 	lhs = getWordEncode(lhs);
 	productions[id] = new Production(id, lhs, rhs);
+	document.getElementById('info').innerHTML+=translate(lhs)+'-->'+translate(rhs)+'</br>';
 }
 
 /**
@@ -283,6 +284,13 @@ let grammerBeingSet = false;
  * @param {string} S Start-symbol.
  */
 function setSymbol(Ts, Ns, S) {
+	let buff='';
+	buff+='<note>Terminals:</note></br>'+Ts+'</br>';
+	buff+='<note>Non-terminals:</note></br>'+Ns+'</br>';
+	buff+='<note>Start symbol:</note></br>'+S+'</br>';
+	buff+='<note>Productions:</note></br>';
+	document.getElementById('info').innerHTML=buff;
+
 	grammerBeingSet = true;
 	let check = Ts + Ns + S;
 	for (let x of check) if (reserveCharacters.indexOf(x) != -1) alert('error4');
@@ -576,6 +584,7 @@ function grantReduce(slist, mlist) {
  * End marker '$' is not allowed since we will append it later.
  */
 function parseLR1(text) {
+	document.getElementById('result').innerHTML = '';
 	//preprocess
 	text += ' $';
 	text = text.replace(/[\n\t]/g, ' ');
@@ -599,6 +608,10 @@ function parseLR1(text) {
 	while (1) {
 		let word = getWordDecode(toks[cur]);
 		let act = parsingTable[state][word];
+		if(!word||!act){
+			alert('error604 Parsing failed!');
+			return;
+		}
 		if (act[0] == 's') {
 			shift(word);
 			cur++;
@@ -613,7 +626,7 @@ function parseLR1(text) {
 		} else if (act[0] == 'a') {
 			break;
 		} else {
-			alert('error567 Parsing failed!');
+			alert('error621');
 			return;
 		}
 	}
@@ -686,6 +699,7 @@ function setupGrammer() {
 	addProduction('simplestmt', 'assignmt');
 	addProduction('simplestmt', 'expr');
 	addProduction('stmtblock','');
+	//addProduction('stmtblock','{ stmtblock }');
 	addProduction('stmtblock', 'stmtblock simplestmt ;');
 	addProduction('stmtblock', 'simplestmt ;');
 	addProduction('stmtblock', 'stmtblock ctrlstmt');
