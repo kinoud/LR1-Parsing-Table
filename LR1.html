@@ -8,7 +8,6 @@
 <body>
 	<style>
 		#state div {
-			font-size: large;
 			color: grey;
 			background-color: whitesmoke;
 			float: left;
@@ -17,7 +16,6 @@
 		}
 
 		#state .trans {
-			font-size: large;
 			opacity: 0.8;
 			color: white;
 			border-radius: 5px;
@@ -71,14 +69,12 @@
 
 	<div id='info' class='msg'></div>
 	<textarea id="in">
-classtype id = id ( id ( number ) , id ) * id / number + id * id ; 
-if ( id ) { 
-	id = number ;
-	while ( id relop id ) { id = id + number ; } 
-} else { 
-	for ( id = number ; id relop id ; id = id + number ) { }
+classtype id ( classtype id ) {
+	for ( id = number ; id relop id ; id = id + number ) {
+		id [ id + id ] = id ( ) ;
+	}
 }
-</textarea></br>
+classtype id ( ) { }</textarea></br>
 	<button id='btn'>
 		Parse. (Tokens are seperated with " " or "\n".)
 	</button>
@@ -86,7 +82,7 @@ if ( id ) {
 	<button onclick="document.getElementById('state').hidden^=1;">
 		Show/Hide all states and transitions.
 	</button>
-	<div id='state' hidden></div>
+	<div id='state'></div>
 </body>
 
 </html>

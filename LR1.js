@@ -633,6 +633,7 @@ function parseLR1(text) {
 	let idx = rec.length - 1;
 	let symbols = productions[rec[idx]].lhs, input = '';
 	let buff = '';
+	//let childIdx=0, childLen=0;
 	for (; idx >= 0; idx--) {
 		//debugger;
 		if (rec[idx] >= 0) {
@@ -641,13 +642,17 @@ function parseLR1(text) {
 			let last = symbols[len - 1];
 			symbols = symbols.substr(0, len - 1);
 			//console.log(translate(symbols)+'<note>'+translate(last)+'</note>'+translate(input));
+
 			buff += translate(symbols) + '<b>' + translate(last) + '</b>' + translate(input);
-			buff += '</br>-->'
+			buff += '<br/>-->'
 			
+			//childIdx=symbols.length+1;
+			//childLen=p.rlen;
 			/**
 			 * When p.rlen=0 p.rhs holds '@', we will not append '@' to symbols.
 			 */
 			if(p.rlen>0)symbols += p.rhs;
+
 		} else {
 			input = toks[--cur] + input;
 			symbols = symbols.substr(0, symbols.length - 1);
@@ -675,16 +680,22 @@ function setupGrammer() {
 	*/
 	setSymbol(
 		'id number + - * / , ; classtype = relop if else for while { } ( ) [ ]',
-		'fcall paramlist expr decl assignmt simplestmt stmtblock ctrlstmt ifstmt forstmt whilestmt',
-		'stmtblock'
+		'program fdef paramlist fcall arglist expr decl assignmt simplestmt stmtblock ctrlstmt ifstmt forstmt whilestmt',
+		'program'
 	);
+	addProduction('program','fdef');
+	addProduction('program','program fdef');
+	addProduction('fdef','classtype id ( paramlist ) { stmtblock }');
+	addProduction('paramlist','paramlist , decl');
+	addProduction('paramlist','decl');
+	addProduction('paramlist','');
 	addProduction('expr', 'id');
 	addProduction('expr', 'number');
 	addProduction('expr', 'fcall');
-	addProduction('fcall', 'id ( )');
-	addProduction('fcall', 'id ( paramlist )');
-	addProduction('paramlist', 'paramlist , expr');
-	addProduction('paramlist', 'expr');
+	addProduction('fcall', 'id ( arglist )');
+	addProduction('arglist', 'arglist , expr');
+	addProduction('arglist', 'expr');
+	addProduction('arglist','');
 	addProduction('expr', 'expr relop expr', 1);
 	addProduction('expr', 'expr + expr', 2);
 	addProduction('expr', 'expr - expr', 3);
@@ -695,6 +706,7 @@ function setupGrammer() {
 	addProduction('decl', 'classtype id = expr');
 	addProduction('decl', 'classtype id [ number ]');
 	addProduction('assignmt', 'id = expr');
+	addProduction('assignmt','id [ expr ] = expr');
 	addProduction('simplestmt', 'decl');
 	addProduction('simplestmt', 'assignmt');
 	addProduction('simplestmt', 'expr');
