@@ -2,6 +2,8 @@
 
 通过产生式生成LR(1)文法的所有状态和转移关系,以及对token序列的自动解析.
 
+[Try it.](https://kinoud.github.io/LR1-Parsing-Table/LR1.html)
+
 Generate LR1 parsing table from productions and parse a token sequence with it.
 
 This was made for my compiler course and it is still being developed.
